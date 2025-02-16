@@ -1,4 +1,4 @@
-from flask import Flask, render_template_string
+from flask import Flask, request, render_template_string
 
 app = Flask(__name__)
 
@@ -24,10 +24,7 @@ def fibonacci(n):
         fib_series.append(fib_series[-1] + fib_series[-2])
     return fib_series[:n]
 
-# Static input number
-static_number = 10  # You can change this number
-
-# HTML Template
+# HTML Form Template
 HTML_TEMPLATE = """
 <!DOCTYPE html>
 <html>
@@ -35,21 +32,34 @@ HTML_TEMPLATE = """
     <title>Logic Demo</title>
 </head>
 <body>
-    <h2>Results for Number: {{ number }}</h2>
-    <p>Factorial: {{ factorial }}</p>
-    <p>Prime Check: {{ prime }}</p>
-    <p>Fibonacci Series: {{ fibonacci }}</p>
+    <h2>Enter a Number</h2>
+    <form method="post">
+        <input type="number" name="number" required>
+        <button type="submit">Submit</button>
+    </form>
+
+    {% if number is not none %}
+        <h3>Results for Number: {{ number }}</h3>
+        <p>Factorial: {{ factorial }}</p>
+        <p>Prime Check: {{ prime }}</p>
+        <p>Fibonacci Series: {{ fibonacci }}</p>
+    {% endif %}
 </body>
 </html>
 """
 
-@app.route("/")
+@app.route("/", methods=["GET", "POST"])
 def home():
-    # Use the static number
-    number = static_number
-    factorial_result = factorial(number)
-    prime_result = "Yes" if is_prime(number) else "No"
-    fibonacci_result = fibonacci(number)
+    number = None
+    factorial_result = None
+    prime_result = None
+    fibonacci_result = None
+
+    if request.method == "POST":
+        number = int(request.form["number"])
+        factorial_result = factorial(number)
+        prime_result = "Yes" if is_prime(number) else "No"
+        fibonacci_result = fibonacci(number)
 
     return render_template_string(HTML_TEMPLATE, number=number, factorial=factorial_result, prime=prime_result, fibonacci=fibonacci_result)
 
