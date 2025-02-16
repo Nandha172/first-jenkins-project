@@ -8,6 +8,13 @@ pipeline {
             }
         }
 
+        stage('Setup Python Environment') {
+            steps {
+                sh 'python3 -m pip install --upgrade pip'
+                sh 'pip3 install flask'
+            }
+        }
+
         stage('Run Flask App') {
             steps {
                 sh 'nohup python3 app.py &'
