@@ -2,6 +2,12 @@ pipeline {
     agent any
 
     stages {
+        stage('Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Clone Repository') {
             steps {
                 git 'https://github.com/Nandha172/first-jenkins-project.git'
@@ -10,32 +16,37 @@ pipeline {
 
         stage('Setup Python Environment') {
             steps {
-                sh '''
-                    sudo apt-get update -y
-                    sudo apt-get install -y python3 python3-venv python3-pip
-                    
-                    # Create venv if not exists
-                    if [ ! -d "venv" ]; then
-                        python3 -m venv venv
-                    fi
-                    
-                    # Install dependencies
-                    venv/bin/pip install --upgrade pip
-                    venv/bin/pip install -r requirements.txt
-                '''
+                script {
+                    sh 'sudo apt-get update -y'
+                    sh 'sudo apt-get install -y python3 python3-venv python3-pip'
+                    sh 'python3 -m venv venv'
+                    sh 'venv/bin/pip install --upgrade pip'
+                    sh 'venv/bin/pip install -r requirements.txt'
+                }
             }
         }
 
         stage('Run Flask App') {
-    steps {
-        script {
-            sh 'nohup venv/bin/python app.py > flask.log 2>&1 &'
-            sleep 5  // Wait a few seconds to ensure Flask starts properly
-            sh 'ps aux | grep app.py'  // Check if the Flask process is running
-        }
-    }
-}
+            steps {
+                script {
+                    // Ensure the Flask app binds to all IP addresses (0.0.0.0) and a visible port
+                    sh 'nohup venv/bin/python app.py &'
+                    sleep(time: 5, unit: 'SECONDS') // Wait a moment to ensure Flask app starts
 
+                    // Check if the Flask app is running
+                    sh 'ps aux | grep app.py'
+                }
+            }
+        }
+
+        stage('Expose Flask App Logs') {
+            steps {
+                script {
+                    // Tail the logs to ensure output is visible in Jenkins console
+                    sh 'tail -f nohup.out'
+                }
+            }
+        }
     }
 }
 
