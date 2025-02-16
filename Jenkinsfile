@@ -27,13 +27,15 @@ pipeline {
         }
 
         stage('Run Flask App') {
-            steps {
-                sh '''
-                    # Run Flask app using venv's Python
-                    venv/bin/python app.py
-                '''
-            }
+    steps {
+        script {
+            sh 'nohup venv/bin/python app.py > flask.log 2>&1 &'
+            sleep 5  // Wait a few seconds to ensure Flask starts properly
+            sh 'ps aux | grep app.py'  // Check if the Flask process is running
         }
+    }
+}
+
     }
 }
 
