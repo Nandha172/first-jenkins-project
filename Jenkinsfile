@@ -12,8 +12,8 @@ pipeline {
             steps {
                 sh '''
                 # Ensure Python, pip, and virtualenv are installed
-                sudo apt-get update -y
-                sudo apt-get install -y python3 python3-venv python3-pip
+                apt-get update -y
+                apt-get install -y python3 python3-venv python3-pip
 
                 # Create a virtual environment only if it doesn't exist
                 if [ ! -d "venv" ]; then
