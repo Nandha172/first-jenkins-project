@@ -3,16 +3,18 @@ pipeline {
     
 
     stages {
-        stage('Clone Repository') {
+        
+        stage('Check Environment') {
+	    steps {
+                sh 'hostname'  // Shows where Jenkins is running
+            }
+        }
+
+	stage('Clone Repository') {
             steps {
                 git 'https://github.com/Nandha172/first-jenkins-project.git'
             }
         }
-       stage('Check Environment') {
-          steps {
-             sh 'hostname'  // Shows where Jenkins is running
-          }
-       }
 
 
         stage('Setup Python Environment') {
