@@ -9,10 +9,12 @@ pipeline {
         }
 
         stage('Setup Python Environment') {
-            steps {
-                sh '''
-                    sudo apt-get update -y
-                    sudo apt-get install -y python3 python3-venv python3-pip
+          steps {
+	          sh '''
+                    sudo apt-get update -y && \
+    		    sudo apt-get install -y python3 && \
+                    sudo apt-get install -y python3-venv && \
+                    sudo apt-get install -y python3-pip
                     
                     # Create venv if not exists
                     if [ ! -d "venv" ]; then
