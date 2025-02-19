@@ -1,5 +1,11 @@
 pipeline {
     agent any
+    
+    stage('Check Environment') {
+       steps {
+          sh 'hostname'  // Shows where Jenkins is running
+       }
+    }
 
     stages {
         stage('Clone Repository') {
@@ -12,7 +18,7 @@ pipeline {
           steps {
 	          sh '''
                     sudo apt-get update -y && \
-    		    sudo apt-get install -y python3 && \
+		    sudo apt-get install -y python3 && \
                     sudo apt-get install -y python3-venv && \
                     sudo apt-get install -y python3-pip
                     
