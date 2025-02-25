@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "nandha172/flask-app"  // Replace with your Docker Hub username and repo
+        DOCKER_IMAGE = "nandha172/flask-app"  // Your Docker Hub image name
         CONTAINER_NAME = "flask_container"
     }
 
@@ -22,41 +22,50 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh '''
-                    docker build -t $DOCKER_IMAGE .
-                '''
+                script {
+                    sh 'docker build -t $DOCKER_IMAGE .'
+                }
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
-                withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_PASSWORD')]) {
-                    sh '''
-                        echo $DOCKER_PASSWORD | docker login -u nandha172 --password-stdin
-                    '''
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
                 }
             }
         }
 
         stage('Push Image to Docker Hub') {
             steps {
-                sh '''
-                    docker push $DOCKER_IMAGE
-                '''
+                sh 'docker push $DOCKER_IMAGE'
             }
         }
 
         stage('Run Flask Container') {
             steps {
-                sh '''
+                script {
+                    sh '''
                     # Stop and remove existing container if running
-                    docker stop $CONTAINER_NAME || true
-                    docker rm $CONTAINER_NAME || true
+                    if [ "$(docker ps -q -f name=$CONTAINER_NAME)" ]; then
+                        docker stop $CONTAINER_NAME
+                        docker rm $CONTAINER_NAME
+                    fi
 
                     # Run the new container
                     docker run -d --name $CONTAINER_NAME -p 5000:5000 $DOCKER_IMAGE
-                '''
+                    '''
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline executed successfully! 🎉'
+        }
+        failure {
+            echo 'Pipeline failed. Check logs for errors.'
         }
     }
 }
