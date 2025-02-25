@@ -1,52 +1,63 @@
 pipeline {
     agent any
-    
+
+    environment {
+        DOCKER_IMAGE = "nandha172/flask-app"  // Replace with your Docker Hub username and repo
+        CONTAINER_NAME = "flask_container"
+    }
 
     stages {
-        
+
         stage('Check Environment') {
-	    steps {
+            steps {
                 sh 'hostname'  // Shows where Jenkins is running
             }
         }
 
-	stage('Clone Repository') {
+        stage('Clone Repository') {
             steps {
                 git 'https://github.com/Nandha172/first-jenkins-project.git'
             }
         }
 
-
-        stage('Setup Python Environment') {
-          steps {
-	          sh '''
-                    sudo apt-get update -y && \
-		    sudo apt-get install -y python3 && \
-                    sudo apt-get install -y python3-venv && \
-                    sudo apt-get install -y python3-pip
-                    
-                    # Create venv if not exists
-                    if [ ! -d "venv" ]; then
-                        python3 -m venv venv
-                    fi
-                    
-                    # Install dependencies
-                    venv/bin/pip install --upgrade pip
-                    venv/bin/pip install -r requirements.txt
+        stage('Build Docker Image') {
+            steps {
+                sh '''
+                    docker build -t $DOCKER_IMAGE .
                 '''
             }
         }
 
-        stage('Run Flask App') {
-          steps {
-            script {
-              sh 'nohup venv/bin/python app.py > flask.log 2>&1 &'
-              sleep 5  // Wait a few seconds to ensure Flask starts properly
-              sh 'ps aux | grep app.py'  // Check if the Flask process is running
+        stage('Login to Docker Hub') {
+            steps {
+                withCredentials([string(credentialsId: 'docker-hub-credentials', variable: 'DOCKER_PASSWORD')]) {
+                    sh '''
+                        echo $DOCKER_PASSWORD | docker login -u nandha172 --password-stdin
+                    '''
+                }
             }
-          }
         }
 
+        stage('Push Image to Docker Hub') {
+            steps {
+                sh '''
+                    docker push $DOCKER_IMAGE
+                '''
+            }
+        }
+
+        stage('Run Flask Container') {
+            steps {
+                sh '''
+                    # Stop and remove existing container if running
+                    docker stop $CONTAINER_NAME || true
+                    docker rm $CONTAINER_NAME || true
+
+                    # Run the new container
+                    docker run -d --name $CONTAINER_NAME -p 5000:5000 $DOCKER_IMAGE
+                '''
+            }
+        }
     }
 }
 
